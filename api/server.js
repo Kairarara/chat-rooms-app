@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const mysql = require("mysql");
 const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 /*
   TO DO: use mysql to store chats
@@ -39,7 +40,7 @@ io.use((socket,next)=>{
 })
 
 let tdb={                               //todo database
-  "Test1":{chat:["old1","old2"],password:"a"},
+  "Test1":{chat:["old1","old2"],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
   "Test2":{chat:["old1","old2"],password:""},
   "room420":{chat:["lol","much funny"],password:""}
 }
@@ -105,16 +106,20 @@ app.post("/CreateRoom", (req, res) => {
 app.post("/EnterRoom",(req,res)=>{
   if(tdb.hasOwnProperty(req.body.name)){
     let hashedPw=req.body.password;
-    if(tdb[req.body.name].password===hashedPw){
-      if(req.session.hasOwnProperty("authorizedRooms")){
-        req.session.authorizedRooms.push(req.body.name);
+
+    bcrypt.compare(req.body.password, tdb[req.body.name].password, function(err, result) {
+      console.log(result)
+      if(result){
+        if(req.session.hasOwnProperty("authorizedRooms")){
+          req.session.authorizedRooms.push(req.body.name);
+        } else {
+          req.session.authorizedRooms=[req.body.name]
+        }
+        res.send("success")
       } else {
-        req.session.authorizedRooms=[req.body.name]
+        res.send("failure")
       }
-      res.send("success")
-    } else {
-      res.send("failure")
-    }
+    });
   } else {
     res.send("failure")
   }
