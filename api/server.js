@@ -3,16 +3,16 @@ const socketIo = require("socket.io");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mysql = require("mysql");
+const bcrypt = require("bcrypt");
 
 /*
   TO DO: use mysql to store chats
+         implement passwords with hashing
 */
 
 
 //express set up
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
 const port = process.env.PORT || 9000;
 const server=app.listen(port, () => {
@@ -22,9 +22,9 @@ const server=app.listen(port, () => {
 const io = socketIo(server);
 io.set('origins', '*:*');
 let tdb={                               //todo database
-  "Test1":["old1","old2"],
-  "Test2":["old1","old2"],
-  "room420":["lol","much funny"]
+  "Test1":{chat:["old1","old2"],password:""},
+  "Test2":{chat:["old1","old2"],password:""},
+  "room420":{chat:["lol","much funny"],password:""}
 }
 
 io.on("connection", socket => {
@@ -41,11 +41,11 @@ io.on("connection", socket => {
     socket.join(room,()=>{
 
       socket.emit('history',{
-        history:tdb[room]
+        history:tdb[room].chat
       })
   
       socket.on("chat",(data)=>{
-        tdb[room].push(data.message);
+        tdb[room].chat.push(data.message);
         io.to(room).emit('chat',data);
       })
 
@@ -63,8 +63,18 @@ io.on("connection", socket => {
 
 
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 app.post("/CreateRoom", (req, res) => {
-  console.log("req.body.message")
-  res.send(req.body.message);
+  let data={
+    nameInUse:Object.keys(tdb).includes(req.body.roomName)
+  }
+
+  if (!data.nameInUse){
+    let hashedPw=req.body.password;
+    tdb[req.body.roomName]={chat:[], password:hashedPw};
+  }
+
+  res.json(data)
 });
