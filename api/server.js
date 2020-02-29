@@ -1,16 +1,19 @@
 const express = require("express");
-const session = require("express-session");
 const socketIo = require("socket.io");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mysql = require("mysql");
 const bcrypt = require("bcrypt");
-const saltRounds = 10;
+
 
 /*
-  TO DO: use mysql to store chats
-         implement passwords with hashing
+  TO DO:  use mysql to store chats
+          implement usernames
+          fix ability to create nameless rooms
 */
+
+
+const saltRounds = 10;
 
 
 //express set up
@@ -21,68 +24,25 @@ const server=app.listen(port, () => {
   console.log("Listening to port " + port);
 });
 
-//socket.io set up
-const io = socketIo(server);
-io.set('origins', '*:*');
-
-//session set up
-const secret = process.env.SECRET || "vC7*EqraC";
-const sessionMiddlewere=session({
-  secret:secret,
-  resave:false,
-  saveUninitialized:false,
-  cookie:{expires:false}
-})
-
-app.use(sessionMiddlewere)
-io.use((socket,next)=>{
-  sessionMiddlewere(socket.request, socket.request.res, next)
-})
-
-let tdb={                               //todo database
-  "Test1":{chat:["old1","old2"],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
-  "Test2":{chat:["old1","old2"],password:""},
-  "room420":{chat:["lol","much funny"],password:""}
-}
-
-io.on("connection", socket => {
-  console.log("New client connected");
-
-
-  socket.on('startRoom',(data)=>{
-    const room=data.room;
-
-    if(socket.request.session.authorizedRooms && socket.request.session.authorizedRooms.includes(room)){
-      socket.join(room,()=>{
-
-        socket.emit('history',{
-          history:tdb[room].chat
-        })
-    
-        socket.on("chat",(data)=>{
-          tdb[room].chat.push(data.message);
-          io.to(room).emit('chat',data);
-        })
-
-      })
-
-      socket.on('leaveRoom',()=>{
-        socket.leave(room)
-      })
-    }
-
-  })
-
-
-  socket.on("disconnect", () => console.log("Client disconnected"));
-});
-
-
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+//socket.io set up
+const io = socketIo(server);
+io.set('origins', '*:*');
 
+
+let tdb={                               //todo database
+  "Test1":{chat:["old1","old2"],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
+  "Test2":{chat:["old1","old2"],password:false},
+  "room420":{chat:["lol","much funny"],password:false}
+}
+
+
+
+
+//express routes
 app.get("/RoomList", (req, res) => {
   let data={
     rooms:Object.keys(tdb)
@@ -103,24 +63,44 @@ app.post("/CreateRoom", (req, res) => {
   res.json(data)
 });
 
-app.post("/EnterRoom",(req,res)=>{
-  if(tdb.hasOwnProperty(req.body.name)){
-    let hashedPw=req.body.password;
 
-    bcrypt.compare(req.body.password, tdb[req.body.name].password, function(err, result) {
-      console.log(result)
-      if(result){
-        if(req.session.hasOwnProperty("authorizedRooms")){
-          req.session.authorizedRooms.push(req.body.name);
+//socket.io routes
+io.on("connection", socket => {
+  console.log("New client connected");
+
+
+
+  socket.on('startRoom',(data)=>{
+    const room=data.room;
+    console.log("New client connected");
+
+    if(tdb.hasOwnProperty(data.room)){
+      bcrypt.compare(data.password, tdb[data.room].password, function(err, result) {
+        if(result || tdb[data.room].password===false){
+          socket.join(room,()=>{
+            socket.emit('history',{
+              history:tdb[room].chat
+            })
+        
+            socket.on("chat",(data)=>{
+              tdb[room].chat.push(data.message);
+              io.to(room).emit('chat',data);
+            })
+
+          })
+
+          socket.on('leaveRoom',()=>{
+            socket.leave(room)
+          })
         } else {
-          req.session.authorizedRooms=[req.body.name]
+          socket.emit("failedAccess")
         }
-        res.send("success")
-      } else {
-        res.send("failure")
-      }
-    });
-  } else {
-    res.send("failure")
-  }
+      })
+    } else {
+      socket.emit("failedAccess")
+    }
+
+
+    socket.on("disconnect", () => console.log("Client disconnected"));
+  });
 })
