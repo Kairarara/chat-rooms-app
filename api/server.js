@@ -7,9 +7,8 @@ const bcrypt = require("bcrypt");
 
 
 /*
-  TO DO:  use mysql to store chats
-          implement usernames
-          fix ability to create nameless rooms
+  TO DO:  use mysql to store chats  instead of tdb (test data base)
+          add some server security
 */
 
 
@@ -34,9 +33,9 @@ io.set('origins', '*:*');
 
 
 let tdb={                               //todo database
-  "Test1":{chat:["old1","old2"],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
-  "Test2":{chat:["old1","old2"],password:false},
-  "room420":{chat:["lol","much funny"],password:false}
+  "Test1":{chat:[{username:"Anon",message:"old1"},{username:"A  non2",message:"old2"}],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
+  "Test2":{chat:[{username:"Anon",message:"old1"},{username:"Anon2",message:"old2"}],password:false},
+  "room420":{chat:[{username:"Anon",message:"old1"},{username:"Anon2",message:"old2"}],password:false}
 }
 
 
@@ -51,13 +50,29 @@ app.get("/RoomList", (req, res) => {
 });
 
 app.post("/CreateRoom", (req, res) => {
-  let data={
-    nameInUse:Object.keys(tdb).includes(req.body.roomName)
+  let nameIsValid=(name)=>{
+    if(name.length>20){
+      return "tooLong"
+    } else if(name.length<4){
+      return "tooShort"
+    } else if(Object.keys(tdb).includes(name)){
+      return "inUse"
+    } else {
+      return true;
+    }
   }
 
-  if (!data.nameInUse){
-    let hashedPw=req.body.password;
-    tdb[req.body.roomName]={chat:[], password:hashedPw};
+  let data=nameIsValid(req.body.roomName)
+
+  
+  if (data===true){
+    if(req.body.password!==false && req.body.password!==""){
+      bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        tdb[req.body.roomName]={chat:[], password:hash};
+      });
+    } else {
+      tdb[req.body.roomName]={chat:[], password:false};
+    }
   }
 
   res.json(data)
@@ -72,7 +87,6 @@ io.on("connection", socket => {
 
   socket.on('startRoom',(data)=>{
     const room=data.room;
-    console.log("New client connected");
 
     if(tdb.hasOwnProperty(data.room)){
       bcrypt.compare(data.password, tdb[data.room].password, function(err, result) {
@@ -83,14 +97,20 @@ io.on("connection", socket => {
             })
         
             socket.on("chat",(data)=>{
-              tdb[room].chat.push(data.message);
-              io.to(room).emit('chat',data);
+              if(data.message.message!==""){
+                let newData=data.message
+                if(newData.username==="") newData.username="Anon"
+                tdb[room].chat.push(newData);
+                io.to(room).emit('chat',newData);
+              }
             })
 
           })
 
           socket.on('leaveRoom',()=>{
+            console.log()
             socket.leave(room)
+            socket.disconnect()
           })
         } else {
           socket.emit("failedAccess")
