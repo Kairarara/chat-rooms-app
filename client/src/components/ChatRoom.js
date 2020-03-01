@@ -14,7 +14,7 @@ class ChatRoom extends React.Component{
       room:this.props.location.room,
       username:"Anon",
       newMessage:"",
-      chatHistory:[],
+      chatHistory:[{username:"a",message:"b"}],
       redirect:"loading"
     }
     

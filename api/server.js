@@ -10,7 +10,14 @@ const bcrypt = require("bcrypt");
   TO DO:  use mysql to store chats  instead of tdb (test data base)
           add some server security, check https://owasp.org/
 */
+const connection = mysql.createConnection({
+  host     : 'localhost',
+  user     : 'root',
+  password : 'Gioc0.De1.Dad1',
+  database : 'my_chat_rooms'
+});
 
+connection.connect();
 
 const saltRounds = 10;
 
@@ -31,30 +38,26 @@ app.use(bodyParser.json());
 const io = socketIo(server);
 io.set('origins', '*:*');
 
-
-let tdb={                               //todo database
-  "Test1":{chat:[{username:"Anon",message:"old1"},{username:"A  non2",message:"old2"}],password:"$2b$10$L.86LiNCKoF0z.3.m5UWuuZsvOW7QNrju88dOZy22.AUMvVq/7D.m"},
-  "Test2":{chat:[{username:"Anon",message:"old1"},{username:"Anon2",message:"old2"}],password:false},
-  "room420":{chat:[{username:"Anon",message:"old1"},{username:"Anon2",message:"old2"}],password:false}
-}
-
-
-
-
 //express routes
 app.get("/RoomList", (req, res) => {
-  let data={
-    rooms:Object.keys(tdb)
-  }
-  res.json(data)
+  connection.query('SELECT name FROM rooms', function (error, results, fields) {
+    if (error) throw error;
+    res.json(results)
+  });
 });
 
 app.post("/CreateRoom", (req, res) => {
   let nameIsValid=(name)=>{
+    roomInDb=false;
+    connection.query('SELECT COUNT(*) AS count FROM rooms WHERE name="'+name+'"', function (error, results, fields) {
+      if (error) throw error;
+      if(results[0].count>0) roomInDb=true;
+    });
+
     if(
       name.length>20 ||
       name.length<4 ||
-      Object.keys(tdb).includes(name)
+      roomInDb
     ){
       return false;
     } else {
@@ -73,11 +76,18 @@ app.post("/CreateRoom", (req, res) => {
   let data=nameIsValid(req.body.roomName)===true && pwIsValid(req.body.password)
 
   if (data){
+    connection.query(`CREATE TABLE ${req.body.roomName}(username VARCHAR(20) NOT NULL, message VARCHAR(255) NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW());`, function (error, results, fields) {
+      if (error) throw error;
+    });
     if(req.body.password===false || req.body.password===""){
-      tdb[req.body.roomName]={chat:[], password:false};
+      connection.query(`INSERT INTO rooms SET name='${req.body.roomName}', password=NULL`, function (error, results, fields) {
+        if (error) throw error;
+      });
     } else {
       bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        tdb[req.body.roomName]={chat:[], password:hash};
+        connection.query(`INSERT INTO rooms SET name='${req.body.roomName}', password="${hash}"`, function (error, results, fields) {
+          if (error) throw error;
+        });
       });
     }
   }
@@ -94,37 +104,44 @@ io.on("connection", socket => {
 
   socket.on('startRoom',(data)=>{
     const room=data.room;
+    connection.query(`SELECT * FROM rooms WHERE name="${room}"`, function (err, results, fields) {
+      if(err) throw err;
+      console.log(results)
+      if(results.length>0){
+        bcrypt.compare(data.password, results[0].password, function(err, result) {
+          if(result || results[0].password===null){
+            socket.join(room,()=>{
+              connection.query(`SELECT * FROM ${room} ORDER BY created_at DESC LIMIT 50`, function (err, results, fields) {
+                if(err) throw err;
+                socket.emit('history',{
+                  history:results
+                })
+              })
+          
+              socket.on("chat",(data)=>{
+                if(data.message.message!==""){
+                  let newData=data.message
+                  if(newData.username==="") newData.username="Anon"
+                  connection.query(`INSERT INTO ${room} SET ?`, newData, function (err, results, fields) {
+                    if(err) throw err;
+                    io.to(room).emit('chat',newData);
+                  })
+                }
+              })
 
-    if(tdb.hasOwnProperty(data.room)){
-      bcrypt.compare(data.password, tdb[data.room].password, function(err, result) {
-        if(result || tdb[data.room].password===false){
-          socket.join(room,()=>{
-            socket.emit('history',{
-              history:tdb[room].chat
             })
-        
-            socket.on("chat",(data)=>{
-              if(data.message.message!==""){
-                let newData=data.message
-                if(newData.username==="") newData.username="Anon"
-                tdb[room].chat.push(newData);
-                io.to(room).emit('chat',newData);
-              }
+
+            socket.on('leaveRoom',()=>{
+              socket.disconnect()
             })
-
-          })
-
-          socket.on('leaveRoom',()=>{
-            console.log()
-            socket.disconnect()
-          })
-        } else {
-          socket.emit("failedAccess")
-        }
-      })
-    } else {
-      socket.emit("failedAccess")
-    }
+          } else {
+            socket.emit("failedAccess")
+          }
+        })
+      } else {
+        socket.emit("failedAccess")
+      }
+    })
 
 
     socket.on("disconnect", () => console.log("Client disconnected"));

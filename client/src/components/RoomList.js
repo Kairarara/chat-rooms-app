@@ -20,7 +20,8 @@ class RoomList extends React.Component{
   componentDidMount=()=>{
     axios.get('http://localhost:9000/RoomList')
       .then((res)=>{
-        this.setState({rooms : res.data.rooms});
+        console.log(res)
+        this.setState({rooms : res.data || []});
       })
   }
 
@@ -40,13 +41,10 @@ class RoomList extends React.Component{
 
 
     const rooms=this.state.rooms
-      .filter( room => room.toLowerCase().includes(this.state.filter.toLowerCase()) )
-      .map( room => <ListedRoom key={room} room={room} socket={this.props.socket} enterRoom={this.enterRoom} 
-                                warning={(this.state.badRoom===room)?this.state.warning:false}/> );
+      .filter( room => room.name.toLowerCase().includes(this.state.filter.toLowerCase()) )
+      .map( room => <ListedRoom key={room.name} room={room.name} socket={this.props.socket} enterRoom={this.enterRoom} 
+                                warning={(this.state.badRoom===room.name)?this.state.warning:false}/> );
     
-    if(this.props.location){
-
-    }
 
     return(
       <div className="RoomList">
