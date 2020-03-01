@@ -7,8 +7,7 @@ const bcrypt = require("bcrypt");
 
 
 /*
-  TO DO:  use mysql to store chats  instead of tdb (test data base)
-          add some server security, check https://owasp.org/
+  TO DO:  add some server security, check https://owasp.org/
 */
 const connection = mysql.createConnection({
   host     : 'localhost',
@@ -76,9 +75,6 @@ app.post("/CreateRoom", (req, res) => {
   let data=nameIsValid(req.body.roomName)===true && pwIsValid(req.body.password)
 
   if (data){
-    connection.query(`CREATE TABLE ${req.body.roomName}(username VARCHAR(20) NOT NULL, message VARCHAR(255) NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW());`, function (error, results, fields) {
-      if (error) throw error;
-    });
     if(req.body.password===false || req.body.password===""){
       connection.query(`INSERT INTO rooms SET name='${req.body.roomName}', password=NULL`, function (error, results, fields) {
         if (error) throw error;
@@ -90,9 +86,14 @@ app.post("/CreateRoom", (req, res) => {
         });
       });
     }
+    connection.query(`CREATE TABLE ${req.body.roomName}(username VARCHAR(20) NOT NULL, message VARCHAR(255) NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW());`, function (error, results, fields) {
+      if (error) throw error;
+      res.send(data)
+    });
+  } else {
+    res.send(data)
   }
 
-    res.send(data)
 });
 
 
@@ -106,7 +107,6 @@ io.on("connection", socket => {
     const room=data.room;
     connection.query(`SELECT * FROM rooms WHERE name="${room}"`, function (err, results, fields) {
       if(err) throw err;
-      console.log(results)
       if(results.length>0){
         bcrypt.compare(data.password, results[0].password, function(err, result) {
           if(result || results[0].password===null){
