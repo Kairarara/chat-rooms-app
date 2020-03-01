@@ -21,12 +21,14 @@ class App extends React.Component{
   render(){
     return(
       <Router>
-        <Switch>
-          <Route path='/ChatRoom' component={ChatRoom}/>
-          <Route path='/RoomList' component={RoomList}/>
-          <Route path='/CreateRoom' component={CreateRoom}/>
-          <Route path='/' component={HomePage}/>
-        </Switch>
+        <div className="App">
+          <Switch>
+            <Route path='/ChatRoom' component={ChatRoom}/>
+            <Route path='/RoomList' component={RoomList}/>
+            <Route path='/CreateRoom' component={CreateRoom}/>
+            <Route path='/' component={HomePage}/>
+          </Switch>
+        </div>
       </Router>
     );
   }

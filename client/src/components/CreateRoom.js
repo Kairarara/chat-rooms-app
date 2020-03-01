@@ -2,7 +2,6 @@ import React from 'react';
 import axios from 'axios';
 import {Redirect} from 'react-router-dom';
 import './CreateRoom.css';
-let a=1;
 
 class CreateRoom extends React.Component{
   constructor(props){
@@ -10,19 +9,17 @@ class CreateRoom extends React.Component{
     this.state={
       roomName:"",
       password:"",
-      redirect:false,
-      warning:""
+      redirect:false
     }
   }
 
 
-  handleSubmit=()=>{
+  handleSubmit=(event)=>{
+    event.preventDefault();
     axios.post("http://localhost:9000/CreateRoom",{roomName:this.state.roomName, password: this.state.password})
       .then((res)=>{
         if(res.data===true){
           this.setState({redirect:true})
-        } else {
-          this.setState({warning:<label>Room name {res.data}</label>})
         }
       })
   }
@@ -47,15 +44,12 @@ class CreateRoom extends React.Component{
   render(){
 
     return(
-      <div>
+      <div className="CreateRoom">
         {this.renderRedirect()}
-        <form>
-          <label htmlFor="name">Room Name</label>
-          <input type="text" name="name" value={this.state.roomName} onChange={this.handleNameFieldChange} required/>
-          {this.state.warning}
-          <label htmlFor="password">Password</label>
-          <input type="text" name="password" value={this.state.password} onChange={this.handlePasswordFieldChange}/>
-          <input type="button" value="Create Room" onClick={this.handleSubmit}/>
+        <form onSubmit={this.handleSubmit}>
+          <input type="text" name="name" value={this.state.roomName} onChange={this.handleNameFieldChange} placeholder="Room Name" minLength="4" maxLength="20" required/>
+          <input type="password" name="password" value={this.state.password} onChange={this.handlePasswordFieldChange} maxLength="20" placeholder="Password"/>
+          <input type="submit" value="Create Room"/>
         </form>
       </div>
     )

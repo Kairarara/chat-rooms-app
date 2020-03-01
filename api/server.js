@@ -8,7 +8,7 @@ const bcrypt = require("bcrypt");
 
 /*
   TO DO:  use mysql to store chats  instead of tdb (test data base)
-          add some server security
+          add some server security, check https://owasp.org/
 */
 
 
@@ -51,31 +51,38 @@ app.get("/RoomList", (req, res) => {
 
 app.post("/CreateRoom", (req, res) => {
   let nameIsValid=(name)=>{
-    if(name.length>20){
-      return "tooLong"
-    } else if(name.length<4){
-      return "tooShort"
-    } else if(Object.keys(tdb).includes(name)){
-      return "inUse"
+    if(
+      name.length>20 ||
+      name.length<4 ||
+      Object.keys(tdb).includes(name)
+    ){
+      return false;
+    } else {
+      return true;
+    }
+  }
+  
+  let pwIsValid=(pw)=>{
+    if(pw.length>20){
+      return false
     } else {
       return true;
     }
   }
 
-  let data=nameIsValid(req.body.roomName)
+  let data=nameIsValid(req.body.roomName)===true && pwIsValid(req.body.password)
 
-  
-  if (data===true){
-    if(req.body.password!==false && req.body.password!==""){
+  if (data){
+    if(req.body.password===false || req.body.password===""){
+      tdb[req.body.roomName]={chat:[], password:false};
+    } else {
       bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
         tdb[req.body.roomName]={chat:[], password:hash};
       });
-    } else {
-      tdb[req.body.roomName]={chat:[], password:false};
     }
   }
 
-  res.json(data)
+    res.send(data)
 });
 
 
@@ -109,7 +116,6 @@ io.on("connection", socket => {
 
           socket.on('leaveRoom',()=>{
             console.log()
-            socket.leave(room)
             socket.disconnect()
           })
         } else {

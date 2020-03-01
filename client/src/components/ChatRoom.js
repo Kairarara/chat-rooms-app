@@ -6,37 +6,35 @@ import './ChatRoom.css';
 class ChatRoom extends React.Component{
   constructor(props){
     super(props);
+
+    const socket=ioClient("http://localhost:9000")
+
     this.state={
-      socket:-1,
+      socket:socket,
       room:this.props.location.room,
       username:"Anon",
       newMessage:"",
       chatHistory:[],
-      redirect:false
+      redirect:"loading"
     }
+
   }
 
   componentDidMount=()=>{
-    const socket=ioClient("http://localhost:9000");
-
-    this.setState({
-      socket:socket
-    })
+    const socket=this.state.socket;
 
     socket.emit('startRoom',{
-      room:this.state.room,
+      room:this.props.location.room,
       password:this.props.location.password
     })
 
     socket.on("failedAccess",()=>{
-      this.setState({
-        redirect:true
-      });
+      this.setState({redirect:true});
     })
-
 
     socket.on('history',(data)=>{
       this.setState({
+        redirect:false,
         chatHistory:data.history
       });
     })
@@ -48,7 +46,6 @@ class ChatRoom extends React.Component{
       });
     })
 
-
   }
 
   componentWillUnmount=()=>{
@@ -56,9 +53,14 @@ class ChatRoom extends React.Component{
     socket.emit("leaveRoom");
   }
 
-  renderRedirect=()=>{
-    if(this.state.redirect)
-      return <Redirect to="/"/>
+  handleLoading=()=>{
+    if(this.state.redirect==="loading")
+      return <div className="Loading"/>
+  }
+
+  handleRedirect=()=>{
+    if(this.state.redirect===true)
+      return <Redirect to={{pathname:`/RoomList`, warning:"Incorrect password.", room:this.state.room}}/>
   }
 
   handleClick=()=>{
@@ -84,7 +86,7 @@ class ChatRoom extends React.Component{
   }
   
   render(){
-    let chat=""
+    let chat;
     if(this.state.chatHistory){
       chat=this.state.chatHistory.map(ele => {
         return(
@@ -93,11 +95,14 @@ class ChatRoom extends React.Component{
       });
     }
 
+    console.log(this.state.redirect)
+
     return(
-      <div>
-        {this.renderRedirect()}
+      <div className="ChatRoom">
+        {this.handleLoading()}
+        {this.handleRedirect()}
         <ul>
-          {chat}
+          {chat?chat:"Loading"}
         </ul>
         <form>
           <input type="text" value={this.state.username} onChange={this.handleUsername}/>

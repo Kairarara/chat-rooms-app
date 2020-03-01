@@ -1,0 +1,19 @@
+.ChatRoom{
+    width:100%;
+    height: 100%;
+    margin:0px;
+    position: relative;
+}
+
+.Loading{
+    background-color: #d1edff;
+    margin:0px;
+    position: absolute;
+    width:100%;
+    height: 100%;
+    z-index: 1;
+}
+
+ul{
+    margin:0px;
+}

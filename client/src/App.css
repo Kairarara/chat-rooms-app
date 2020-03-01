@@ -1,0 +1,15 @@
+.App{
+    height: 100%;
+    width: 100%;
+    margin:0;
+    font-family: sans-serif;
+    color: #005891;
+}
+
+input:placeholder-shown{
+    font-weight: bold;
+}
+
+input{
+    background-color: #f5fbff;
+}
