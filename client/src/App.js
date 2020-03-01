@@ -12,11 +12,6 @@ import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import CreateRoom from './components/CreateRoom';
 
-
-/*
-  TO DO style all pages
-*/
-
 class App extends React.Component{
   render(){
     return(

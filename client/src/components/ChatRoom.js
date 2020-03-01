@@ -1,27 +1,32 @@
 import React from 'react';
 import ioClient from 'socket.io-client';
 import {Redirect} from 'react-router-dom';
+import InputIcon from './InputIcon.js';
 import './ChatRoom.css';
 
 class ChatRoom extends React.Component{
   constructor(props){
     super(props);
 
-    const socket=ioClient("http://localhost:9000")
 
     this.state={
-      socket:socket,
+      socket:-1,
       room:this.props.location.room,
       username:"Anon",
       newMessage:"",
       chatHistory:[],
       redirect:"loading"
     }
+    
 
   }
 
   componentDidMount=()=>{
-    const socket=this.state.socket;
+    const socket=ioClient("http://localhost:9000");
+
+    this.setState({
+      socket:socket
+    })
 
     socket.emit('startRoom',{
       room:this.props.location.room,
@@ -63,7 +68,8 @@ class ChatRoom extends React.Component{
       return <Redirect to={{pathname:`/RoomList`, warning:"Incorrect password.", room:this.state.room}}/>
   }
 
-  handleClick=()=>{
+  handleClick=(e)=>{
+    e.preventDefault();
     const socket=this.state.socket;
     socket.emit('chat',{
       message:{
@@ -90,12 +96,10 @@ class ChatRoom extends React.Component{
     if(this.state.chatHistory){
       chat=this.state.chatHistory.map(ele => {
         return(
-          <li>{ele.username + " " + ele.message}</li>
+          <li><p>{ele.username + ": " + ele.message}</p></li>
         )
       });
     }
-
-    console.log(this.state.redirect)
 
     return(
       <div className="ChatRoom">
@@ -105,9 +109,9 @@ class ChatRoom extends React.Component{
           {chat?chat:"Loading"}
         </ul>
         <form>
-          <input type="text" value={this.state.username} onChange={this.handleUsername}/>
-          <input type="text" value={this.state.newMessage} onChange={this.handleMessage}/>
-          <input type="button" onClick={this.handleClick}/>
+          <input className="username" type="text" value={this.state.username} onChange={this.handleUsername}/>
+          <input className="message" type="text" value={this.state.newMessage} onChange={this.handleMessage}/>
+          <button onClick={this.handleClick}><InputIcon/></button>
         </form>
       </div>
     )

@@ -2,10 +2,10 @@
     width:100%;
     height: 100%;
     margin:0px;
-    position: relative;
+    padding: 0px;
 }
 
-.Loading{
+.ChatRoom .Loading{
     background-color: #d1edff;
     margin:0px;
     position: absolute;
@@ -14,6 +14,73 @@
     z-index: 1;
 }
 
-ul{
+.ChatRoom ul{
     margin:0px;
+    list-style-type: none;
+    height:90%;
+    padding: 0px;
+    overflow-y: scroll;
+}
+
+.ChatRoom li{
+    padding: 20px;
+    max-width: 80%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: auto;
+}
+
+.ChatRoom li p{
+    box-shadow: 0px 0px 10px #888888;
+    border: solid #61c0ff;
+    font-size: 20px;
+    padding: 7px;
+    border-radius: 15px;
+    width: auto;
+    word-wrap: break-word;
+}
+
+.ChatRoom form{
+    height:10%;
+    background-color: #005891;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.ChatRoom .username{
+    display: flex;
+    flex-direction: row;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    box-shadow: 0px 0px 10px #888888;
+    border: solid #61c0ff;
+    padding: 5px 20px;
+    width: 10%;
+    height:40%;
+    font-size: 30px;
+    text-align: right;
+}
+
+.ChatRoom .message{
+    display: flex;
+    flex-direction: row;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    box-shadow: 0px 0px 10px #888888;
+    border: solid #61c0ff;
+    padding: 5px 20px;
+    width: 65%;
+    height:40%;
+    font-size: 25px;
+}
+
+.ChatRoom button{
+    border: none;
+    position: relative;
+    left: -3%;
+    background: transparent;
 }
