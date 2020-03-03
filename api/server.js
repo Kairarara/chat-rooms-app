@@ -39,7 +39,7 @@ io.set('origins', '*:*');
 
 //express routes
 app.get("/RoomList", (req, res) => {
-  connection.query('SELECT name FROM rooms', function (error, results, fields) {
+  connection.query('SELECT name, IF(password IS NULL, FALSE, TRUE) AS has_password FROM rooms', function (error, results, fields) {
     if (error) throw error;
     res.json(results)
   });

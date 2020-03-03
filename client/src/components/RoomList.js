@@ -42,7 +42,7 @@ class RoomList extends React.Component{
 
     const rooms=this.state.rooms
       .filter( room => room.name.toLowerCase().includes(this.state.filter.toLowerCase()) )
-      .map( room => <ListedRoom key={room.name} room={room.name} socket={this.props.socket} enterRoom={this.enterRoom} 
+      .map( room => <ListedRoom key={room.name} room={room.name} hasPassword={room.has_password} socket={this.props.socket} enterRoom={this.enterRoom} 
                                 warning={(this.state.badRoom===room.name)?this.state.warning:false}/> );
     
 
@@ -81,17 +81,29 @@ class ListedRoom extends React.Component{
   }
 
   render(){
-    let style={height:"150px"};
-
+    let style={height:"100px"};
     style["marginTop"]=(this.state.expanded)?"0px":("-"+style.height);
+    let renderPassword;
+    if(this.props.hasPassword===1){
+      renderPassword=(
+        <div className="password">
+          <input type="password" onChange={this.handlePasswordChange} value={this.state.password} maxLength="20" placeholder="Password"/>
+          <button onClick={()=>this.props.enterRoom(this.props.room, this.state.password)}><InputIcon/></button>
+        </div>
+      )
+    } else {
+      renderPassword=(
+        <div className="noPassword">
+          <button onClick={()=>this.props.enterRoom(this.props.room)}>Enter</button>
+        </div>
+      )
+    }
+
     return(
       <li key={this.props.room} className="Room">
         <h2 onClick={this.expand}>{this.props.room}</h2>
         <div className="expanded" style={style}>
-          <div className="password">
-            <input type="password" onChange={this.handlePasswordChange} value={this.state.password} maxLength="20" placeholder="Password"/>
-            <button onClick={()=>this.props.enterRoom(this.props.room, this.state.password)}><InputIcon/></button>
-          </div>
+          {renderPassword}
           <p style={{color:"red"}}>{this.props.warning}</p>
         </div>
       </li>
