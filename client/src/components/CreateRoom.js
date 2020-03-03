@@ -26,7 +26,7 @@ class CreateRoom extends React.Component{
 
   renderRedirect=()=>{
     if(this.state.redirect)
-      return <Redirect to={{pathname:"/RoomList"}}/>
+      return <Redirect to={{pathname:`/ChatRoom`, room:this.state.roomName, password:this.state.password}}/>
   }
 
   handleNameFieldChange=(e)=>{
