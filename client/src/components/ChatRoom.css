@@ -18,13 +18,12 @@
     margin:0px;
     list-style-type: none;
     height:90%;
-    padding: 0px;
+    padding: 0px 10%;
     overflow-y: scroll;
 }
 
 .ChatRoom li{
     padding: 20px;
-    max-width: 80%;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -39,7 +38,7 @@
     font-size: 20px;
     padding: 7px;
     border-radius: 15px;
-    width: auto;
+    overflow: auto;
     word-wrap: break-word;
 }
 

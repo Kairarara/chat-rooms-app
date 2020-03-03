@@ -48,7 +48,7 @@ class CreateRoom extends React.Component{
         {this.renderRedirect()}
         <form onSubmit={this.handleSubmit} autoComplete="off">
           <input type="text" name="name" value={this.state.roomName} onChange={this.handleNameFieldChange} placeholder="Room Name" minLength="4" maxLength="20" required/>
-          <input type="password" name="password" value={this.state.password} onChange={this.handlePasswordFieldChange} maxLength="20" placeholder="Password"/>
+          <input type="password" name="password" value={this.state.password} onChange={this.handlePasswordFieldChange} maxLength="20" placeholder="Password" autoComplete="new-password"/>
           <input type="submit" value="Create Room"/>
         </form>
       </div>

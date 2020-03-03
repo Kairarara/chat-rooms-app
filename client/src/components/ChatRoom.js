@@ -107,8 +107,8 @@ class ChatRoom extends React.Component{
           {chat?chat:"Loading"}
         </ul>
         <form>
-          <input className="username" type="text" value={this.state.username} onChange={this.handleUsername}/>
-          <input className="message" type="text" value={this.state.newMessage} onChange={this.handleMessage}/>
+          <input className="username" type="text" value={this.state.username} onChange={this.handleUsername} maxLength="20"/>
+          <input className="message" type="text" value={this.state.newMessage} onChange={this.handleMessage} maxLength="255"/>
           <button onClick={this.handleClick}><InputIcon/></button>
         </form>
       </div>
