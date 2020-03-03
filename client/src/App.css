@@ -6,10 +6,14 @@
     color: #005891;
 }
 
+input{
+    background-color: #f5fbff;
+}
+
 input:placeholder-shown{
     font-weight: bold;
 }
 
-input{
-    background-color: #f5fbff;
+svg{
+    fill:#005891;
 }

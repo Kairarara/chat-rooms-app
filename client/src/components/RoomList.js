@@ -49,7 +49,7 @@ class RoomList extends React.Component{
     return(
       <div className="RoomList">
         {this.handleRedirect()}
-        <input type="text" name="filter" className="filter" onChange={this.handleFilter} value={this.state.filter} placeholder="Search Rooms"/>
+        <input type="search" name="filter" className="filter" onChange={this.handleFilter} value={this.state.filter} placeholder="Search Rooms" autoComplete="off"/>
         <ul>
           {rooms}
         </ul>

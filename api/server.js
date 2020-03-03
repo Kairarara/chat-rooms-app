@@ -5,16 +5,18 @@ const cors = require("cors");
 const mysql = require("mysql");
 const bcrypt = require("bcrypt");
 
+require('dotenv').config();
 
 /*
   TO DO:  add some server security, check https://owasp.org/
 */
 const connection = mysql.createConnection({
-  host     : 'localhost',
+  host     : process.env.HOST,
   user     : 'root',
-  password : 'Gioc0.De1.Dad1',
+  password : process.env.PASSWORD,
   database : 'my_chat_rooms'
 });
+
 
 connection.connect();
 
@@ -24,7 +26,7 @@ const saltRounds = 10;
 //express set up
 const app = express();
 
-const port = process.env.PORT || 9000;
+const port = process.env.PORT;
 const server=app.listen(port, () => {
   console.log("Listening to port " + port);
 });
@@ -46,52 +48,39 @@ app.get("/RoomList", (req, res) => {
 });
 
 app.post("/CreateRoom", (req, res) => {
-  let nameIsValid=(name)=>{
-    roomInDb=false;
-    connection.query('SELECT COUNT(*) AS count FROM rooms WHERE name=?', [name], function (error, results, fields) {
-      if (error) throw error;
-      if(results[0].count>0) roomInDb=true;
-    });
+  const name=req.body.roomName;
+  const password=req.body.password;
+  connection.query('SELECT COUNT(*) AS count FROM rooms WHERE name=?', [name], function (error, results, fields) {
+    if (error) throw error;
 
-    if(
-      name.length>20 ||
-      name.length<4 ||
-      roomInDb
-    ){
-      return false;
-    } else {
-      return true;
-    }
-  }
-  
-  let pwIsValid=(pw)=>{
-    if(pw.length>20){
-      return false
-    } else {
-      return true;
-    }
-  }
+    let roomIsValid=(
+      name.length<21 &&
+      name.length>3 &&
+      results[0].count===0 &&
+      password.length<21
+    )
 
-  let data=nameIsValid(req.body.roomName)===true && pwIsValid(req.body.password)
+    console.log(roomIsValid)
 
-  if (data){
-    if(req.body.password===false || req.body.password===""){
-      connection.query(`INSERT INTO rooms SET name=?, password=NULL`,[req.body.roomName], function (err, results) {
-        if (err) throw err;
-        res.send(data);
-      });
-    } else {
-      bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        connection.query(`INSERT INTO rooms SET name=?, password=?`, [req.body.roomName, hash], function (err, results) {
+    if (roomIsValid){
+      if(password===false || password===""){
+        connection.query(`INSERT INTO rooms SET name=?, password=NULL`,[req.body.roomName], function (err, results) {
           if (err) throw err;
-          res.send(data);
+          res.send(roomIsValid);
         });
-      });
+      } else {
+        bcrypt.hash(password, saltRounds, function(err, hash) {
+          connection.query(`INSERT INTO rooms SET name=?, password=?`, [req.body.roomName, hash], function (err, results) {
+            if (err) throw err;
+            res.send(roomIsValid);
+          });
+        });
+      }
+    } else {
+      res.send(roomIsValid)
     }
-  } else {
-    res.send(data)
-  }
 
+  });
 });
 
 //socket.io routes
