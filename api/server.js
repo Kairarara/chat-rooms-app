@@ -48,7 +48,7 @@ app.get("/RoomList", (req, res) => {
 app.post("/CreateRoom", (req, res) => {
   let nameIsValid=(name)=>{
     roomInDb=false;
-    connection.query('SELECT COUNT(*) AS count FROM rooms WHERE name="'+name+'"', function (error, results, fields) {
+    connection.query('SELECT COUNT(*) AS count FROM rooms WHERE name=?', [name], function (error, results, fields) {
       if (error) throw error;
       if(results[0].count>0) roomInDb=true;
     });
@@ -76,26 +76,23 @@ app.post("/CreateRoom", (req, res) => {
 
   if (data){
     if(req.body.password===false || req.body.password===""){
-      connection.query(`INSERT INTO rooms SET name='${req.body.roomName}', password=NULL`, function (error, results, fields) {
-        if (error) throw error;
+      connection.query(`INSERT INTO rooms SET name=?, password=NULL`,[req.body.roomName], function (err, results) {
+        if (err) throw err;
+        res.send(data);
       });
     } else {
       bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        connection.query(`INSERT INTO rooms SET name='${req.body.roomName}', password="${hash}"`, function (error, results, fields) {
-          if (error) throw error;
+        connection.query(`INSERT INTO rooms SET name=?, password=?`, [req.body.roomName, hash], function (err, results) {
+          if (err) throw err;
+          res.send(data);
         });
       });
     }
-    connection.query(`CREATE TABLE ${req.body.roomName}(username VARCHAR(20) NOT NULL, message VARCHAR(255) NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW());`, function (error, results, fields) {
-      if (error) throw error;
-      res.send(data)
-    });
   } else {
     res.send(data)
   }
 
 });
-
 
 //socket.io routes
 io.on("connection", socket => {
@@ -105,13 +102,13 @@ io.on("connection", socket => {
 
   socket.on('startRoom',(data)=>{
     const room=data.room;
-    connection.query(`SELECT * FROM rooms WHERE name="${room}"`, function (err, results, fields) {
+    connection.query(`SELECT * FROM rooms WHERE name=?`, [room], function (err, results, fields) {
       if(err) throw err;
       if(results.length>0){
         bcrypt.compare(data.password, results[0].password, function(err, result) {
           if(result || results[0].password===null){
             socket.join(room,()=>{
-              connection.query(`SELECT * FROM ${room} ORDER BY created_at DESC LIMIT 50`, function (err, results, fields) {
+              connection.query(`SELECT * FROM chat_history WHERE room_name=? ORDER BY created_at DESC`, [room], function (err, results, fields) {
                 if(err) throw err;
                 socket.emit('history',{
                   history:results
@@ -119,11 +116,16 @@ io.on("connection", socket => {
               })
           
               socket.on("chat",(data)=>{
-                if(data.message.message!==""){
-                  let newData=data.message
+                if(data.message!==""){
+                  let newData=data;
+                  newData.room_name=room;
                   if(newData.username==="") newData.username="Anon"
-                  connection.query(`INSERT INTO ${room} SET ?`, newData, function (err, results, fields) {
+                  console.log(newData)
+                  connection.query(`INSERT INTO chat_history SET ?`, newData, function (err, results, fields) {
                     if(err) throw err;
+                    connection.query('UPDATE rooms SET rooms.last_update=NOW() WHERE  rooms.name=?', [room], (err)=>{
+                      if (err) throw err;
+                    })
                     io.to(room).emit('chat',newData);
                   })
                 }

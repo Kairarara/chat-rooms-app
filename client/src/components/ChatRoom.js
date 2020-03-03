@@ -72,10 +72,8 @@ class ChatRoom extends React.Component{
     e.preventDefault();
     const socket=this.state.socket;
     socket.emit('chat',{
-      message:{
-        username:this.state.username,
-        message:this.state.newMessage
-      }
+      username:this.state.username,
+      message:this.state.newMessage
     });
   }
 
