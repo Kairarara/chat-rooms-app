@@ -3,6 +3,7 @@ import ioClient from 'socket.io-client';
 import {Redirect} from 'react-router-dom';
 import InputIcon from './InputIcon.js';
 import './ChatRoom.css';
+import TextareaAutosize from 'react-textarea-autosize';
 
 class ChatRoom extends React.Component{
   constructor(props){
@@ -68,8 +69,7 @@ class ChatRoom extends React.Component{
       return <Redirect to={{pathname:`/RoomList`, warning:"Incorrect password.", room:this.state.room}}/>
   }
 
-  handleClick=(e)=>{
-    e.preventDefault();
+  submit=()=>{
     const socket=this.state.socket;
     socket.emit('chat',{
       username:this.state.username,
@@ -89,6 +89,10 @@ class ChatRoom extends React.Component{
     })
   }
   
+  handleHeightChange=(e)=>{
+    console.log(e)
+  }
+
   render(){
     let chat;
     if(this.state.chatHistory){
@@ -98,19 +102,22 @@ class ChatRoom extends React.Component{
         )
       });
     }
-
+    
     return(
       <div className="ChatRoom">
         {this.handleLoading()}
         {this.handleRedirect()}
+        <header>
+          <h2>Writing in {this.state.room} as</h2>
+          <TextareaAutosize className="username" type="text" value={this.state.username} onChange={this.handleUsername} maxLength="20"/>
+        </header>
         <ul>
           {chat?chat:"Loading"}
         </ul>
-        <form>
-          <input className="username" type="text" value={this.state.username} onChange={this.handleUsername} maxLength="20"/>
-          <input className="message" type="text" value={this.state.newMessage} onChange={this.handleMessage} maxLength="255"/>
-          <button onClick={this.handleClick}><InputIcon/></button>
-        </form>
+        <div className="msgContainer">
+          <TextareaAutosize className="message" value={this.state.newMessage} onKeyDown={(e)=>{if(e.keyCode==13) this.submit()}} onChange={this.handleMessage} maxLength="255"/>
+          <button onClick={(e)=>{e.preventDefault(); this.submit()}}><InputIcon/></button>
+        </div>
       </div>
     )
   }
