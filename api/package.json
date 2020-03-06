@@ -7,7 +7,8 @@
   },
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "pretest": "eslint --ignore-path .gitignore ."
   },
   "dependencies": {
     "@hapi/joi": "^17.1.0",
@@ -15,9 +16,11 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.15.2",
+    "helmet": "^3.21.3",
     "mysql": "^2.18.1",
     "socket.io": "^2.3.0"
   },
   "author": "Pierluigi Caruso",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {}
 }
