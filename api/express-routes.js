@@ -27,13 +27,13 @@ module.exports = (app, connection)=>{              //express routes
     const roomName = value.room;
     const password = value.password;
 
-    connection.query('SELECT EXISTS(SELECT * FROM rooms WHERE name=?) AS exists', [roomName], function (error, results) {
+    connection.query('SELECT EXISTS(SELECT * FROM rooms WHERE name=?) AS exist', [roomName], function (error, results) {
       if (error){
         console.log("Database error", error)
         res.send(false);
       }
   
-      if (results[0].exists===0){
+      if (results[0].exist===0){
         if(password===false || password===""){                      //we send a response in both cases because mysql queries are async
           connection.query(`INSERT INTO rooms SET name=?, password=NULL`,[roomName], function (err) {
             if (err){

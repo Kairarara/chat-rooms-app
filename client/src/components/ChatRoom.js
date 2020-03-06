@@ -109,7 +109,7 @@ class ChatRoom extends React.Component{
         {this.handleRedirect()}
         <header>
           <h2>Writing in {this.state.room} as</h2>
-          <TextareaAutosize className="username" type="text" value={this.state.username} onChange={this.handleUsername} maxLength="20"/>
+          <TextareaAutosize className="username" value={this.state.username} onKeyDown={(e)=>{if(e.keyCode==13) e.preventDefault()}} onChange={this.handleUsername} maxLength="20"/>
         </header>
         <ul>
           {chat?chat:"Loading"}

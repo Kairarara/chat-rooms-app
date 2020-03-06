@@ -1,6 +1,5 @@
 const schema = require('./joi-schema.js');
 const bcrypt = require("bcrypt");
-require('dotenv').config();
 
 
 
@@ -70,8 +69,7 @@ module.exports = (io, connection)=>{                  //socket.io routes
               socket.emit("failedAccess")
             }
           })
-          
-          socket.on("disconnect", () => console.log("Client disconnected"));
         });
+        socket.on("disconnect", () => console.log("Client disconnected"));
       })
 }
