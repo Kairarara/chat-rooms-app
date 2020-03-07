@@ -88,10 +88,6 @@ class ChatRoom extends React.Component{
       newMessage:e.target.value
     })
   }
-  
-  handleHeightChange=(e)=>{
-    console.log(e)
-  }
 
   render(){
     let chat;
