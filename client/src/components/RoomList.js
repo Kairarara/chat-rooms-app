@@ -20,7 +20,6 @@ class RoomList extends React.Component{
   componentDidMount=()=>{
     axios.get('http://localhost:9000/RoomList')
       .then((res)=>{
-        console.log(res)
         this.setState({rooms : res.data || []});
       })
   }

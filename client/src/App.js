@@ -11,6 +11,7 @@ import HomePage from './components/HomePage';
 import RoomList from './components/RoomList';
 import ChatRoom from './components/ChatRoom';
 import CreateRoom from './components/CreateRoom';
+import ServerError from './components/ServerError';
 
 class App extends React.Component{
   render(){
@@ -21,6 +22,7 @@ class App extends React.Component{
             <Route path='/ChatRoom' component={ChatRoom}/>
             <Route path='/RoomList' component={RoomList}/>
             <Route path='/CreateRoom' component={CreateRoom}/>
+            <Route path='/ServerError' component={ServerError}/>
             <Route path='/' component={HomePage}/>
           </Switch>
         </div>

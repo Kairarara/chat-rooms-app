@@ -16,7 +16,9 @@ class ChatRoom extends React.Component{
       username:"Anon",
       newMessage:"",
       chatHistory:[{username:"a",message:"b"}],
-      redirect:"loading"
+      redirect:false,
+      loading:true,
+      warning:""
     }
     
 
@@ -34,13 +36,9 @@ class ChatRoom extends React.Component{
       password:this.props.location.password
     })
 
-    socket.on("failedAccess",()=>{
-      this.setState({redirect:true});
-    })
-
     socket.on('history',(data)=>{
       this.setState({
-        redirect:false,
+        loading:false,
         chatHistory:data.history
       });
     })
@@ -52,21 +50,23 @@ class ChatRoom extends React.Component{
       });
     })
 
-  }
+    socket.on("failedAccess",(data)=>{
+      this.setState({redirect:"/RoomList", warning:data.message});
+    })
 
-  componentWillUnmount=()=>{
-    const socket=this.state.socket;
-    socket.emit("leaveRoom");
+    socket.on("failedConnection",(data)=>{
+      this.setState({redirect:"/ServerError", warning:data.message});
+    })
   }
 
   handleLoading=()=>{
-    if(this.state.redirect==="loading")
+    if(this.state.loading)
       return <div className="Loading"/>
   }
 
   handleRedirect=()=>{
-    if(this.state.redirect===true)
-      return <Redirect to={{pathname:`/RoomList`, warning:"Incorrect password.", room:this.state.room}}/>
+    if(this.state.redirect!==false)
+      return <Redirect to={{pathname:this.state.redirect, warning:this.state.warning, room:this.state.room}}/>
   }
 
   submit=()=>{
@@ -109,13 +109,13 @@ class ChatRoom extends React.Component{
         {this.handleRedirect()}
         <header>
           <h2>Writing in {this.state.room} as</h2>
-          <TextareaAutosize className="username" value={this.state.username} onKeyDown={(e)=>{if(e.keyCode==13) e.preventDefault()}} onChange={this.handleUsername} maxLength="20"/>
+          <TextareaAutosize className="username" value={this.state.username} onKeyDown={(e)=>{if(e.keyCode===13) e.preventDefault()}} onChange={this.handleUsername} maxLength="20"/>
         </header>
         <ul>
           {chat?chat:"Loading"}
         </ul>
         <div className="msgContainer">
-          <TextareaAutosize className="message" value={this.state.newMessage} onKeyDown={(e)=>{if(e.keyCode==13) this.submit()}} onChange={this.handleMessage} maxLength="255"/>
+          <TextareaAutosize className="message" value={this.state.newMessage} onKeyDown={(e)=>{if(e.keyCode===13) this.submit()}} onChange={this.handleMessage} minLength="1" maxLength="255"/>
           <button onClick={(e)=>{e.preventDefault(); this.submit()}}><InputIcon/></button>
         </div>
       </div>

@@ -17,6 +17,7 @@ const schema= Joi.object({
                 .max(20),
   
     message: Joi.string()
+                .min(1)
                 .max(255),
   })
 

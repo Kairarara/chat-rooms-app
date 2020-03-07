@@ -19,6 +19,7 @@ app.use(helmet())
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+require('./express-error-handler.js')(app);
 
 
 // mysql set up
@@ -29,6 +30,7 @@ const connection = mysql.createConnection({
   database : 'my_chat_rooms'
 });
 connection.connect();
+
 
 //socket.io set up
 const io = socketIo(server);
