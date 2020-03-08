@@ -2,7 +2,6 @@ const express = require("express");
 const socketIo = require("socket.io");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const mysql = require("mysql");
 const helmet = require('helmet');
 
 require('dotenv').config();
@@ -19,17 +18,9 @@ app.use(helmet())
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-require('./express-error-handler.js')(app);
 
-
-// mysql set up
-const connection = mysql.createConnection({
-  host     : process.env.HOST,
-  user     : 'root',
-  password : process.env.PASSWORD,
-  database : 'my_chat_rooms'
-});
-connection.connect();
+app.use(require("./express-error-handler"));
+app.use("/",require("./express-routes"))
 
 
 //socket.io set up
@@ -39,5 +30,4 @@ io.set('origins', '*:*');
 
 let buckets={};
 
-require('./express-routes.js')(app, connection);
-require('./socket-events.js')(io, connection, buckets)
+require('./socket-events.js')(io, buckets)

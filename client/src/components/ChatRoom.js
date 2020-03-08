@@ -1,5 +1,4 @@
 import React from 'react';
-import ioClient from 'socket.io-client';
 import {Redirect} from 'react-router-dom';
 import InputIcon from './InputIcon.js';
 import './ChatRoom.css';
@@ -11,11 +10,10 @@ class ChatRoom extends React.Component{
 
 
     this.state={
-      socket:-1,
       room:this.props.location.room,
       username:"Anon",
       newMessage:"",
-      chatHistory:[{username:"a",message:"b"}],
+      chatHistory:[],
       redirect:false,
       loading:true,
       warning:"",
@@ -27,11 +25,8 @@ class ChatRoom extends React.Component{
 
   componentDidMount=()=>{
 
-    const socket=ioClient("http://localhost:9000");
-
-    this.setState({
-      socket:socket
-    })
+    const socket=this.props.socket;
+    console.log(this.props)
 
     socket.emit('startRoom',{
       room:this.props.location.room,
@@ -78,7 +73,7 @@ class ChatRoom extends React.Component{
   }
 
   submit=()=>{
-    const socket=this.state.socket;
+    const socket=this.props.socket;
     socket.emit('chat',{
       username:this.state.username,
       message:this.state.newMessage

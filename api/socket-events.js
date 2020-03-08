@@ -1,10 +1,14 @@
 const schema = require('./joi-schema.js');
 const bcrypt = require("bcrypt");
 const TokenBucket = require('./token-bucket.js');
+const connection = require("./mysql-connection");
 
-module.exports = (io, connection, buckets)=>{                  //socket.io routes
+module.exports = (io, buckets)=>{                  //socket.io routes
   io.on("connection", socket => {
     console.log("New client connected");
+    socket.on("disconnect",()=>{
+      console.log("Client disconnected");
+    })
 
     socket.on('startRoom',(data)=>{
 
@@ -14,7 +18,6 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
 
       if(!buckets[socket.handshake.address].removeLoginToken()){
         socket.emit("failedAccess",{message:"too many login attempts"});
-        socket.disconnect();
         return;
       };
 
@@ -22,7 +25,6 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
       if(error){
         console.error(error.details[0])
         socket.emit("failedConnection",{message:"invalid user data"});
-        socket.disconnect();
         return;
       }
   
@@ -33,7 +35,6 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
         if(error){
           console.error(error);
           socket.emit("failedConnection",{message:"unexpected database failure"});
-          socket.disconnect();
           return;
         }
         if(results.length>0){
@@ -44,7 +45,6 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
                 if(error){
                   console.error(error);
                   socket.emit("failedConnection",{message:"failed history retrieval"});
-                  socket.disconnect();
                   return;
                 }
                 socket.emit('history',{
@@ -70,7 +70,6 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
                   if(error){
                     console.error(error);
                     socket.emit("failedConnection",{message:"failed chat insert"})
-                    socket.disconnect();
                     return;
                   }
                   connection.query('UPDATE rooms SET rooms.last_update=NOW() WHERE  rooms.name=?', [room], (error)=>{
@@ -94,14 +93,12 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
               if(error){
                 console.error(error);
                 socket.emit("failedAccess",{message:"unexpected password error"});
-                socket.disconnect();
                 return;
               }
               if(result){
                 allowChat();
               } else {
                 socket.emit("failedAccess",{message:"incorrect password"});
-                socket.disconnect();
                 return;
               }
             })
@@ -109,14 +106,9 @@ module.exports = (io, connection, buckets)=>{                  //socket.io route
 
         } else {
           socket.emit("failedConnection",{message:"room does not exist"});
-          socket.disconnect();
           return;
         }
       })
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.log("Client disconnected ", reason)
     });
   })
 

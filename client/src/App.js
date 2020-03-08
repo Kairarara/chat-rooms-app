@@ -1,4 +1,5 @@
 import React from 'react';
+import ioClient from 'socket.io-client';
 import {
   BrowserRouter as Router,
   Switch,
@@ -14,12 +15,19 @@ import CreateRoom from './components/CreateRoom';
 import ServerError from './components/ServerError';
 
 class App extends React.Component{
+  constructor(props){
+    super(props);
+    this.state={
+      socket:ioClient("http://localhost:9000")
+    }
+  }
+
   render(){
     return(
       <Router>
         <div className="App">
           <Switch>
-            <Route path='/ChatRoom' component={ChatRoom}/>
+            <Route path='/ChatRoom' render={(props)=><ChatRoom {...props} socket={this.state.socket} />}/>
             <Route path='/RoomList' component={RoomList}/>
             <Route path='/CreateRoom' component={CreateRoom}/>
             <Route path='/ServerError' component={ServerError}/>
