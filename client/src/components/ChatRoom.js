@@ -18,13 +18,15 @@ class ChatRoom extends React.Component{
       chatHistory:[{username:"a",message:"b"}],
       redirect:false,
       loading:true,
-      warning:""
+      warning:"",
+      chatError:null
     }
     
-
+    this.endOfChat = React.createRef();
   }
 
   componentDidMount=()=>{
+
     const socket=ioClient("http://localhost:9000");
 
     this.setState({
@@ -40,13 +42,14 @@ class ChatRoom extends React.Component{
       this.setState({
         loading:false,
         chatHistory:data.history
-      });
+      },()=>{this.scrollToChatEnd("auto")});
     })
 
     socket.on('chat',(data)=>{
       this.setState({
         chatHistory:[...this.state.chatHistory, data],
-        newMessage:""
+        newMessage:"",
+        chatError:null
       });
     })
 
@@ -56,6 +59,11 @@ class ChatRoom extends React.Component{
 
     socket.on("failedConnection",(data)=>{
       this.setState({redirect:"/ServerError", warning:data.message});
+    })
+
+    socket.on("emptyBucket",()=>{
+      this.setState({chatError:"Spam detected, try again in a while"},
+      ()=>{this.scrollToChatEnd()})
     })
   }
 
@@ -74,7 +82,9 @@ class ChatRoom extends React.Component{
     socket.emit('chat',{
       username:this.state.username,
       message:this.state.newMessage
-    });
+    },()=>{
+      this.scrollToChatEnd();
+    })
   }
 
   handleUsername=(e)=>{
@@ -89,6 +99,10 @@ class ChatRoom extends React.Component{
     })
   }
 
+  scrollToChatEnd=(behaviour="smooth")=>{
+    this.endOfChat.current.scrollIntoView({behavior:behaviour})
+  }
+
   render(){
     let chat;
     if(this.state.chatHistory){
@@ -97,6 +111,11 @@ class ChatRoom extends React.Component{
           <li><p>{ele.username + ": " + ele.message}</p></li>
         )
       });
+    }
+
+    let chatError;
+    if(this.state.chatError!==null){
+      chatError=<li className="ChatError">{this.state.chatError}</li>
     }
     
     return(
@@ -109,9 +128,11 @@ class ChatRoom extends React.Component{
         </header>
         <ul>
           {chat?chat:"Loading"}
+          {chatError}
+          <span ref={this.endOfChat}/>
         </ul>
         <div className="msgContainer">
-          <TextareaAutosize className="message" value={this.state.newMessage} onKeyDown={(e)=>{if(e.keyCode===13) this.submit()}} onChange={this.handleMessage} minLength="1" maxLength="255"/>
+          <TextareaAutosize className="message" value={this.state.newMessage} onKeyDown={(e)=>{if(e.keyCode===13) {e.preventDefault(); this.submit()}}} onChange={this.handleMessage} minLength="1" maxLength="255"/>
           <button onClick={(e)=>{e.preventDefault(); this.submit()}}><InputIcon/></button>
         </div>
       </div>

@@ -69,6 +69,10 @@
     width:90%;
 }
 
+.ChatError{
+    color:red;
+}
+
 .ChatRoom li p{
     box-shadow: 0px 0px 10px #888888;
     border: solid #61c0ff;

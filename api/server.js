@@ -36,5 +36,8 @@ connection.connect();
 const io = socketIo(server);
 io.set('origins', '*:*');
 
+
+let buckets={};
+
 require('./express-routes.js')(app, connection);
-require('./socket-events.js')(io, connection)
+require('./socket-events.js')(io, connection, buckets)

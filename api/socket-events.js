@@ -1,13 +1,23 @@
 const schema = require('./joi-schema.js');
 const bcrypt = require("bcrypt");
+const TokenBucket = require('./token-bucket.js');
 
-
-
-module.exports = (io, connection)=>{                  //socket.io routes
+module.exports = (io, connection, buckets)=>{                  //socket.io routes
   io.on("connection", socket => {
     console.log("New client connected");
-    
+
     socket.on('startRoom',(data)=>{
+
+      if(!buckets.hasOwnProperty(socket.handshake.address)){
+        buckets[socket.handshake.address] = new TokenBucket();
+      }
+
+      if(!buckets[socket.handshake.address].removeLoginToken()){
+        socket.emit("failedAccess",{message:"too many login attempts"});
+        socket.disconnect();
+        return;
+      };
+
       const {error, value} = schema.validate({room:data.room, password:data.password})
       if(error){
         console.error(error.details[0])
@@ -42,7 +52,11 @@ module.exports = (io, connection)=>{                  //socket.io routes
                 })
               })
           
-              socket.on("chat",(data)=>{
+              socket.on("chat",(data, scrollToChatEnd)=>{
+                if(!buckets[socket.handshake.address].removeMsgToken()){
+                  socket.emit("emptyBucket")
+                  return;
+                };
                 const {error, value} = schema.validate({message:data.message, username:data.username})
                 if(error){ 
                   return;
@@ -66,6 +80,7 @@ module.exports = (io, connection)=>{                  //socket.io routes
                     }
                   })
                   io.to(room).emit('chat',newData);
+                  scrollToChatEnd();
                 })
               })
           
