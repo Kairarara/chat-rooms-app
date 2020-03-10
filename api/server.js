@@ -19,8 +19,8 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(require("./express-error-handler"));
 app.use("/",require("./express-routes"))
+app.use(require("./express-error-handler"));
 
 
 //socket.io set up
